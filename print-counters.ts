@@ -1,3 +1,4 @@
+import "$std/dotenv/load.ts";
 import { Pool } from 'npm:@neondatabase/serverless';
 
 const pool = new Pool({ connectionString: Deno.env.get("DATABASE_URL") });
