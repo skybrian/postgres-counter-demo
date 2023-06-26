@@ -1,0 +1,14 @@
+body {
+    color: #f8f8f2;
+    background-color: #282a36;
+    margin: 16px;
+}
+
+.buttons {
+    display: flex;
+}
+
+.buttons button {
+    margin-right: 16px;
+    font-size: 36pt;
+}
