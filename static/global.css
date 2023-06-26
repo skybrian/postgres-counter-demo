@@ -4,6 +4,19 @@ body {
     margin: 16px;
 }
 
+a:link {
+    color: #8be9fd;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #72e4fd;
+}
+
+a:visited {
+    color: #bd93f9;
+}
+
 .buttons {
     display: flex;
 }
