@@ -3,10 +3,11 @@ import { Head, asset } from "$fresh/runtime.ts";
 
 import { query } from "../lib/database.ts";
 import { Counter } from "../lib/schema.ts";
+import CounterButton from "../islands/counter-button.tsx"
 
 export const handler: Handlers = {
     async GET(_, ctx: HandlerContext) {
-        const rs = await query('select key, symbol, count from counters order by key');
+        const rs = await query('select id, symbol, count from counters order by id');
         return ctx.render(rs.rows);
     }
   };
@@ -41,7 +42,4 @@ export default function renderPage({ data }: PageProps<Counter[]>) {
 }
 
 const renderForm = (rows: Counter[]) =>
-    <form class="buttons" method="POST" action="/increment">{rows.map(renderButton)}</form>
-
-const renderButton = (c: Counter) =>
-    <button name="button" value={c.key}>{c.count} {c.symbol}</button>
+    <div class="counters">{rows.map((c) => <CounterButton {...c}/>)}</div>

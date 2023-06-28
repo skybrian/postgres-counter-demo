@@ -17,11 +17,15 @@ a:visited {
     color: #bd93f9;
 }
 
-.buttons {
+.counters {
     display: flex;
 }
 
-.buttons button {
+.counters button {
     margin-right: 16px;
     font-size: 36pt;
+}
+
+.counters .pressed {
+    background-color: #6d4f96;
 }

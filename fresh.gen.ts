@@ -5,6 +5,7 @@
 import * as $0 from "./routes/_middleware.ts";
 import * as $1 from "./routes/increment.ts";
 import * as $2 from "./routes/index.tsx";
+import * as $$0 from "./islands/counter-button.tsx";
 
 const manifest = {
   routes: {
@@ -12,7 +13,9 @@ const manifest = {
     "./routes/increment.ts": $1,
     "./routes/index.tsx": $2,
   },
-  islands: {},
+  islands: {
+    "./islands/counter-button.tsx": $$0,
+  },
   baseUrl: import.meta.url,
 };
 
