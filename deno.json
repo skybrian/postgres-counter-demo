@@ -3,8 +3,8 @@
   "tasks": {
     "start": "deno run -A --watch=static/,routes/ dev.ts",
     "update": "deno run -A -r https://fresh.deno.dev/update .",
-    "install-tables": "deno run -A install-tables.ts",
-    "print-counters": "deno run -A print-counters.ts"
+    "install-tables": "deno run -A commands/install-tables.ts",
+    "print-counters": "deno run -A commands/print-counters.ts"
   },
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.2.0/",

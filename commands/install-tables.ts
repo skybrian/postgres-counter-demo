@@ -1,7 +1,7 @@
 import "$std/dotenv/load.ts";
 
-import { query, disconnect } from './lib/database.ts';
-import { getInstallScript } from "./lib/schema.ts";
+import { query, disconnect } from '../lib/database.ts';
+import { getInstallScript } from "../lib/schema.ts";
 
 console.log("installing...");
 for (const sql of getInstallScript()) {
