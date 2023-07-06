@@ -21,7 +21,9 @@ export const makeCounterStream = (): ReadableStream => {
     start(controller) {
       controller.enqueue(new TextEncoder().encode("connected\n"));
       channel.onmessage = (event: MessageEvent<Counter>) => {
-        const bytes = new TextEncoder().encode(`data: ${JSON.stringify(event.data)}\n`);
+        const bytes = new TextEncoder().encode(
+          `data: ${JSON.stringify(event.data)}\n`,
+        );
         controller.enqueue(bytes);
       };
     },
