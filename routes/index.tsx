@@ -1,18 +1,21 @@
 import { HandlerContext, Handlers, PageProps } from "$fresh/server.ts";
 import { Head, asset } from "$fresh/runtime.ts";
 
-import { query } from "../lib/database.ts";
 import { Counter } from "../lib/schema.ts";
 import CounterButton from "../islands/counter-button.tsx"
+import { getCounters } from "../lib/counterCache.ts";
 
 export const handler: Handlers = {
     async GET(_, ctx: HandlerContext) {
-        const rs = await query('select id, symbol, count from counters order by id');
-        return ctx.render(rs.rows);
+        return ctx.render(await getCounters());
     }
   };
 
 export default function renderPage({ data }: PageProps<Counter[]>) {
+
+    const renderForm = (rows: Counter[]) =>
+        <div class="counters">{rows.map((c) => <CounterButton {...c}/>)}</div>
+
     return (
         <>
             <Head>
@@ -40,6 +43,3 @@ export default function renderPage({ data }: PageProps<Counter[]>) {
         </>
     );
 }
-
-const renderForm = (rows: Counter[]) =>
-    <div class="counters">{rows.map((c) => <CounterButton {...c}/>)}</div>
