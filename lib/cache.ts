@@ -28,6 +28,7 @@ export class RowCache<T extends Row, RowStruct> {
     this.#subscribers = [];
 
     this.#channel.onmessage = (event: MessageEvent) => {
+      console.log(`received from channel: ${JSON.stringify(event.data)}`);
       this.#replace(new this.#type(event.data));
     };
   }
@@ -78,7 +79,10 @@ export class RowCache<T extends Row, RowStruct> {
     const row = new this.#type(data);
     console.log(`replace: ${row}`);
     if (this.#replace(row)) {
+      console.log(`sending to channel: ${JSON.stringify(data)}`);
       this.#channel.postMessage(data);
+    } else {
+      console.log("already in cache");
     }
   }
 
