@@ -14,6 +14,8 @@ export const handler: Handlers = {
 
     const headers = new Headers();
     headers.set("location", "/");
-    return new Response("", { status: 303, headers });
+    const response = new Response("", { status: 303, headers });
+    console.log("increment done");
+    return response;
   },
 };
