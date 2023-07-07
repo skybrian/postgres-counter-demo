@@ -1,5 +1,11 @@
-import { query } from "./database.ts";
-import { Counter, CounterStruct, Row } from "./schema.ts";
+export interface Row {
+  readonly id: string;
+  /**
+   * Returns true if this is a newer version of the same row, or the row
+   * didn't exist before (represented as undefined).
+   */
+  replaces(other: Row | undefined): boolean;
+}
 
 /**
  * A cache of the rows of a table that automatically synchronizes with similar caches
@@ -9,7 +15,7 @@ import { Counter, CounterStruct, Row } from "./schema.ts";
  *
  * Also supports browser subscriptions using server-sent events.
  */
-class RowCache<T extends Row, RowStruct> {
+export class RowCache<T extends Row, RowStruct> {
   #type: { new (obj: RowStruct): T };
   #rows: Map<string, T>;
   #channel: BroadcastChannel;
@@ -26,9 +32,8 @@ class RowCache<T extends Row, RowStruct> {
     };
   }
 
-  /** Returns each row in the cache. */
-  get rows(): T[] {
-    return [...this.#rows.values()];
+  getRow(id: string): T | undefined {
+    return this.#rows.get(id);
   }
 
   /** Returns the next row that's added or changed in the cache (locally or remotely). */
@@ -41,10 +46,11 @@ class RowCache<T extends Row, RowStruct> {
   /**
    * Returns each row in the cache and all future changes to this cache.
    * Each row will be written as JSON with "data: " in front.
+   * Rows can be in any order.
    */
   makeEventStream(): ReadableStream {
     const encoder = new TextEncoder();
-    const rows = () => this.rows;
+    const rows = () => [...this.#rows.values()];
     const nextRow = () => this.nextChange;
     let done = false;
 
@@ -70,6 +76,7 @@ class RowCache<T extends Row, RowStruct> {
   /** Replaces a cached row if the given row is newer. (Local changes only.) */
   replace(data: RowStruct) {
     const row = new this.#type(data);
+    console.log(`replace: ${row}`);
     if (this.#replace(row)) {
       this.#channel.postMessage(data);
     }
@@ -87,51 +94,3 @@ class RowCache<T extends Row, RowStruct> {
     return true;
   }
 }
-
-export const cache = new RowCache<Counter, CounterStruct>(
-  Counter,
-  "counter-changes",
-);
-
-let loading = null as Promise<Counter[]> | null;
-let ready = false;
-
-export const refresh = (): Promise<Counter[]> => {
-  if (loading) {
-    return loading;
-  }
-
-  loading = (async () => {
-    try {
-      const rs = await query(
-        "select id, symbol, count from counters order by id",
-      );
-      for (const row of rs.rows) {
-        cache.replace(row);
-      }
-      ready = true;
-      return cache.rows;
-    } finally {
-      loading = null;
-    }
-  })();
-  return loading;
-};
-
-export const increment = async (id: string) => {
-  const rs = await query(
-    "update counters set count = count+1 where id=$1 returning id, symbol, count",
-    [id],
-  );
-  if (rs.rowCount != 1) {
-    throw `no counter incremented for '${id}'`;
-  }
-  cache.replace(rs.rows[0]);
-};
-
-export const getCounters = (): Promise<Counter[]> => {
-  if (!ready) return refresh();
-  return Promise.resolve(cache.rows);
-};
-
-refresh();

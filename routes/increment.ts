@@ -1,5 +1,5 @@
 import { Handlers } from "$fresh/server.ts";
-import { increment } from "../lib/counterCache.ts";
+import { increment } from "../lib/counters.ts";
 
 export const handler: Handlers = {
   async POST(req: Request) {

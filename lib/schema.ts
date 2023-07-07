@@ -1,21 +1,14 @@
-const sql = [] as string[];
+import { Row } from "./cache.ts";
 
-export interface Row {
-  readonly id: string;
-  /**
-   * Returns true if this is a newer version of the same row, or the row
-   * didn't exist anymore (undefined).
-   */
-  replaces(other: Row | undefined): boolean;
-}
+const sql = [] as string[];
 
 export interface CounterStruct {
   readonly id: string;
   readonly symbol: string;
-  readonly count: number;
+  readonly count: string | number;
 }
 
-export class Counter implements Row, CounterStruct {
+export class Counter implements Row {
   readonly id: string;
   readonly symbol: string;
   readonly count: number;
@@ -23,11 +16,15 @@ export class Counter implements Row, CounterStruct {
   constructor(obj: CounterStruct) {
     this.id = obj.id;
     this.symbol = obj.symbol;
-    this.count = obj.count;
+    this.count = parseInt(obj.count.toString());
   }
 
   replaces(other: Counter | undefined): boolean {
     return other == null || this.id == other.id && this.count > other.count;
+  }
+
+  toString() {
+    return JSON.stringify(this);
   }
 }
 
