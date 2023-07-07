@@ -11,6 +11,7 @@ export const handler: Handlers = {
     }
 
     try {
+      console.log("calling increment");
       await increment(id);
       console.log("increment finished");
     } catch (e) {
