@@ -28,9 +28,9 @@ export default function renderPage({ data }: PageProps<Counter[]>) {
         {data ? renderForm(data) : "unable to load counters"}
 
         <p>
-          This page is a simple demonstration of how to build an old-fashioned
-          database-backed website using the free tiers of some fairly new
-          Internet services. (New as of 2023.)
+          This page is a demonstration of how to build a database-backed website
+          using the free tiers of some fairly new Internet services. (New as of
+          2023.)
         </p>
 
         <p>Here are the technologies I used:</p>
@@ -40,8 +40,7 @@ export default function renderPage({ data }: PageProps<Counter[]>) {
             <a href="https://deno.com/deploy">Deno Deploy:</a> web hosting
           </li>
           <li>
-            <a href="https://fresh.deno.dev/">Deno Fresh:</a>{" "}
-            web framework (server-side only for this demo)
+            <a href="https://fresh.deno.dev/">Deno Fresh:</a> web framework
           </li>
           <li>
             <a href="https://neon.tech/">Neon:</a> Postgres database hosting

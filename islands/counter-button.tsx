@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
-import { Counter } from "../lib/schema.ts";
+import { CounterStruct } from "../lib/schema.ts";
 
-export default function CounterButton(c: Counter) {
+export default function CounterButton(c: CounterStruct) {
   const pressed = useSignal(false);
 
   const onClick = () => {
