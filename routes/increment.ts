@@ -10,7 +10,11 @@ export const handler: Handlers = {
       throw "no id field";
     }
 
-    await increment(id);
+    try {
+      await increment(id);
+    } catch (e) {
+      console.log(e);
+    }
 
     const headers = new Headers();
     headers.set("location", "/");
