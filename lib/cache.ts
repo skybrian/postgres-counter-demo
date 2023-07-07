@@ -94,6 +94,7 @@ export class RowCache<T extends Row, RowStruct> {
 
     const subs = this.#subscribers;
     this.#subscribers = [];
+    console.log(`notifying ${subs.length} subscribers`);
     for (const sub of subs) {
       sub(row);
     }
