@@ -12,6 +12,7 @@ export const handler: Handlers = {
 
     try {
       await increment(id);
+      console.log("increment finished");
     } catch (e) {
       console.log(e);
     }
@@ -19,7 +20,6 @@ export const handler: Handlers = {
     const headers = new Headers();
     headers.set("location", "/");
     const response = new Response("", { status: 303, headers });
-    console.log("increment done");
     return response;
   },
 };
