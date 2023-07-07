@@ -91,10 +91,14 @@ export class RowCache<T extends Row, RowStruct> {
     const old = this.#rows.get(row.id);
     if (!row.replaces(old)) return false;
     this.#rows.set(row.id, row);
-    for (const sub of this.#subscribers) {
+
+    const subs = this.#subscribers;
+    this.#subscribers = [];
+    for (const sub of subs) {
       sub(row);
     }
-    this.#subscribers = [];
+    console.log("subscribers notified");
+
     return true;
   }
 }
