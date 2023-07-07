@@ -1,21 +1,42 @@
-import { receiveCounters, sendCounter } from "./counterChannel.ts";
 import { query } from "./database.ts";
-import { Counter } from "./schema.ts";
+import { Counter, CounterStruct, Row } from "./schema.ts";
 
-const cache = new Map<string, Counter>();
+class Cache<T extends Row, RowStruct> {
+  #type: { new (obj: RowStruct): T };
+  #rows: Map<string, T>;
+  #channel: BroadcastChannel;
 
-const updateCache = (c: Counter): boolean => {
-  const old = cache.get(c.id);
-  if (old && c.count <= old.count) return false;
-  cache.set(c.id, c);
-  return true;
-};
+  constructor(type: { new (obj: RowStruct): T }, channelName: string) {
+    this.#type = type;
+    this.#rows = new Map<string, T>();
+    this.#channel = new BroadcastChannel(channelName);
 
-export const counterChanged = (c: Counter) => {
-  if (updateCache(c)) {
-    sendCounter(c);
+    this.#channel.onmessage = (event: MessageEvent) => {
+      this.#replace(new this.#type(event.data));
+    };
   }
-};
+
+  get rows(): T[] {
+    return [...this.#rows.values()];
+  }
+
+  /** Replaces a cached row if the given row is newer */
+  replace(data: RowStruct) {
+    const row = new this.#type(data);
+    if (this.#replace(row)) {
+      this.#channel.postMessage(data);
+    }
+  }
+
+  #replace(row: T): boolean {
+    const old = this.#rows.get(row.id);
+    if (!row.replaces(old)) return false;
+    this.#rows.set(row.id, row);
+    return true;
+  }
+}
+
+const cache = new Cache<Counter, CounterStruct>(Counter, "counter-changes");
 
 let loading = null as Promise<Counter[]> | null;
 let ready = false;
@@ -30,12 +51,11 @@ export const refresh = (): Promise<Counter[]> => {
       const rs = await query(
         "select id, symbol, count from counters order by id",
       );
-      const rows = rs.rows as Counter[];
-      for (const c of rows) {
-        counterChanged(c);
+      for (const row of rs.rows) {
+        cache.replace(row);
       }
       ready = true;
-      return rows;
+      return cache.rows;
     } finally {
       loading = null;
     }
@@ -51,14 +71,12 @@ export const increment = async (id: string) => {
   if (rs.rowCount != 1) {
     throw `no counter incremented for '${id}'`;
   }
-  const updated = rs.rows[0] as Counter;
-  counterChanged(updated);
+  cache.replace(rs.rows[0]);
 };
 
 export const getCounters = (): Promise<Counter[]> => {
   if (!ready) return refresh();
-  return Promise.resolve([...cache.values()]);
+  return Promise.resolve(cache.rows);
 };
 
-receiveCounters(updateCache);
 refresh();

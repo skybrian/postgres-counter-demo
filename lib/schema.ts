@@ -1,9 +1,34 @@
 const sql = [] as string[];
 
-export interface Counter {
-  id: string;
-  symbol: string;
-  count: number;
+export interface Row {
+  readonly id: string;
+  /**
+   * Returns true if this is a newer version of the same row, or the row
+   * didn't exist anymore (undefined).
+   */
+  replaces(other: Row | undefined): boolean;
+}
+
+export interface CounterStruct {
+  readonly id: string;
+  readonly symbol: string;
+  readonly count: number;
+}
+
+export class Counter implements Row, CounterStruct {
+  readonly id: string;
+  readonly symbol: string;
+  readonly count: number;
+
+  constructor(obj: CounterStruct) {
+    this.id = obj.id;
+    this.symbol = obj.symbol;
+    this.count = obj.count;
+  }
+
+  replaces(other: Counter | undefined): boolean {
+    return other == null || this.id == other.id && this.count > other.count;
+  }
 }
 
 sql.push(`
