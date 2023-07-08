@@ -1,23 +1,18 @@
 import { MiddlewareHandlerContext } from "$fresh/server.ts";
-
-let requestCount = 0;
-
-const nextLabel = (req: Request): string | null => {
-  const path = new URL(req.url).pathname;
-  if (path.startsWith("/_frsh/")) return null;
-
-  return `${++requestCount} ${req.method} ${path}`;
-};
+import { startLog } from "../lib/log.ts";
 
 export async function handler(
   req: Request,
   ctx: MiddlewareHandlerContext,
 ) {
-  const label = nextLabel(req);
-  if (label != null) console.time(label);
+  const path = new URL(req.url).pathname;
+  if (path.startsWith("/_frsh/")) return ctx.next();
+
+  const log = startLog(`${req.method} ${path}`);
+  ctx.state.log = log;
   try {
     return await ctx.next();
   } finally {
-    if (label != null) console.timeEnd(label);
+    log.timeEnd();
   }
 }

@@ -3,17 +3,19 @@
 // This file is automatically updated during development when running `dev.ts`.
 
 import * as $0 from "./routes/_middleware.ts";
-import * as $1 from "./routes/increment.ts";
-import * as $2 from "./routes/index.tsx";
-import * as $3 from "./routes/listen.ts";
+import * as $1 from "./routes/counters.ts";
+import * as $2 from "./routes/increment.ts";
+import * as $3 from "./routes/index.tsx";
+import * as $4 from "./routes/log.ts";
 import * as $$0 from "./islands/counter-button.tsx";
 
 const manifest = {
   routes: {
     "./routes/_middleware.ts": $0,
-    "./routes/increment.ts": $1,
-    "./routes/index.tsx": $2,
-    "./routes/listen.ts": $3,
+    "./routes/counters.ts": $1,
+    "./routes/increment.ts": $2,
+    "./routes/index.tsx": $3,
+    "./routes/log.ts": $4,
   },
   islands: {
     "./islands/counter-button.tsx": $$0,

@@ -1,8 +1,9 @@
 import { Handlers } from "$fresh/server.ts";
 import { increment } from "../lib/counters.ts";
+import { LogContext } from "../lib/log.ts";
 
 export const handler: Handlers = {
-  async POST(req: Request) {
+  async POST(req: Request, ctx) {
     const form = await req.formData();
 
     const id = form.get("id")?.toString();
@@ -10,17 +11,17 @@ export const handler: Handlers = {
       throw "no id field";
     }
 
+    const log = ctx.state.log as LogContext;
     try {
-      console.log("calling increment");
-      await increment(id);
-      console.log("increment finished");
+      log.send("calling increment");
+      await increment(log, id);
+      log.send("increment finished");
     } catch (e) {
-      console.log(e);
+      log.send(e);
     }
 
     const headers = new Headers();
     headers.set("location", "/");
-    const response = new Response("", { status: 303, headers });
-    return response;
+    return new Response("", { status: 303, headers });
   },
 };

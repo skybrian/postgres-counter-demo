@@ -1,3 +1,5 @@
+import { LogContext, startLog } from "./log.ts";
+
 export interface Row {
   readonly id: string;
   /**
@@ -28,8 +30,10 @@ export class RowCache<T extends Row, RowStruct> {
     this.#subscribers = [];
 
     this.#channel.onmessage = (event: MessageEvent) => {
-      console.log(`received from channel: ${JSON.stringify(event.data)}`);
-      this.#replace(new this.#type(event.data));
+      const log = startLog("channel");
+      log.send(`received: ${JSON.stringify(event.data)}`);
+      this.#replace(log, new this.#type(event.data));
+      log.timeEnd();
     };
   }
 
@@ -75,31 +79,35 @@ export class RowCache<T extends Row, RowStruct> {
   }
 
   /** Replaces a cached row if the given row is newer. (Local changes only.) */
-  replace(data: RowStruct) {
+  replace(ctx: LogContext, data: RowStruct) {
     const row = new this.#type(data);
-    console.log(`replace: ${row}`);
-    if (this.#replace(row)) {
-      console.log(`sending to channel: ${JSON.stringify(data)}`);
+    ctx.send(`replace: ${row}`);
+    if (this.#replace(ctx, row)) {
+      ctx.send(`sending to channel: ${JSON.stringify(data)}`);
       this.#channel.postMessage(data);
     } else {
-      console.log("already in cache");
+      ctx.send("already in cache");
     }
   }
 
   /** Replaces a cached row if the given row is newer. (Local and remote changes.) */
-  #replace(row: T): boolean {
+  #replace(ctx: LogContext, row: T): boolean {
     const old = this.#rows.get(row.id);
     if (!row.replaces(old)) return false;
-    this.#rows.set(row.id, row);
 
+    this.#rows.set(row.id, row);
+    this.#notify(ctx, row);
+
+    return true;
+  }
+
+  #notify(ctx: LogContext, row: T) {
     const subs = this.#subscribers;
     this.#subscribers = [];
-    console.log(`notifying ${subs.length} subscribers`);
+    ctx.send(`notifying ${subs.length} subscribers`);
     for (const sub of subs) {
       sub(row);
     }
-    console.log("subscribers notified");
-
-    return true;
+    ctx.send("subscribers notified");
   }
 }
