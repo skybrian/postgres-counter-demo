@@ -1,4 +1,4 @@
-import { FixedBuffer, SKIPPED } from "./buffer.ts";
+import { CircularBuffer, SKIPPED } from "./async.ts";
 
 export class LogContext {
   #path: string;
@@ -45,4 +45,4 @@ export const makeLogStream = (): ReadableStream<Uint8Array> => {
 
 const root = new LogContext("", "");
 
-const logBuffer = new FixedBuffer<string>(100);
+const logBuffer = new CircularBuffer<string>(100);
