@@ -4,20 +4,19 @@
 export const SKIPPED = Symbol("some items were skipped");
 
 /**
- * FixedBuffer is a circular buffer with a fixed size.
- * It supports async iteration over the items in the buffer.
+ * A CircularBuffer is a buffer with a fixed size.
  * When the buffer is full, new items overwrite the oldest items in the buffer.
- * Any running iterators that haven't read the oldest items yet will skip them.
+ * It supports async iteration over the items in the buffer and any new items pushed.
+ * Any iterators that haven't read the oldest items yet will skip them.
  *
  * @template T The type of elements in the buffer.
  */
-export class FixedBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
+export class CircularBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
   #buffer: T[];
-  #limit: number;
-  #head: number;
-  #tail: number;
-  #size: number;
-  #pushCount: number;
+  #head: number; // location of oldest item
+  #tail: number; // location where next item will be stored
+  #size: number; // number of items in the buffer
+  #pushCount: number; // number of items ever pushed
   #waiters: (() => void)[];
 
   /**
@@ -27,7 +26,6 @@ export class FixedBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
    */
   constructor(limit: number) {
     this.#buffer = new Array<T>(limit);
-    this.#limit = limit;
     this.#head = 0;
     this.#tail = 0;
     this.#size = 0;
@@ -42,17 +40,16 @@ export class FixedBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
    * @param {T} item The item to add.
    */
   push(item: T): void {
-    if (this.#size === this.#limit) {
-      this.#head = (this.#head + 1) % this.#limit; // Move head circularly
+    const limit = this.#buffer.length;
+    if (this.#size === limit) {
+      this.#head = (this.#head + 1) % limit; // Move head circularly
     } else {
       this.#size++;
     }
     this.#buffer[this.#tail] = item; // Add item at the tail
-    this.#tail = (this.#tail + 1) % this.#limit; // Move tail circularly
+    this.#tail = (this.#tail + 1) % limit; // Move tail circularly
 
-    for (const wake of this.#waiters) {
-      wake();
-    }
+    this.#waiters.map((wake) => wake());
     this.#waiters = [];
   }
 
@@ -69,18 +66,19 @@ export class FixedBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
     void,
     unknown
   > {
-    let current = 0;
+    let yieldCount = 0;
     let itemIndex = this.#pushCount;
     while (true) {
       if (this.#pushCount - itemIndex > this.#size) {
         yield SKIPPED;
+        itemIndex = this.#pushCount - this.#size;
       }
 
-      if (current < this.#size) {
-        const index = (this.#head + current) % this.#limit;
-        current++;
-        itemIndex++;
+      if (yieldCount < this.#size) {
+        const index = (this.#head + yieldCount) % this.#buffer.length;
         yield this.#buffer[index];
+        yieldCount++;
+        itemIndex++;
       } else {
         // Wait for a new item to be pushed
         await new Promise<void>((resolve) => this.#waiters.push(resolve));
