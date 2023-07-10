@@ -1,0 +1,23 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug print-cached-counters",
+      "program": "${workspaceFolder}/commands/print-cached-counters.ts",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "/Users/skybrian/.deno/bin/deno",
+      "runtimeArgs": [
+        "run",
+        "--inspect-wait",
+        "--allow-all",
+        "--unstable"
+      ],
+      "attachSimplePort": 9229,
+    }
+  ]
+}

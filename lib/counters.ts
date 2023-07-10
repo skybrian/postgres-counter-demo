@@ -1,25 +1,29 @@
 import { RowCache } from "./cache.ts";
 import { query } from "./database.ts";
-import { LogContext, startLog } from "./log.ts";
+import { startLog, TaskLog } from "./log.ts";
 import { Counter, CounterStruct } from "./schema.ts";
 
 const cache = new RowCache<Counter, CounterStruct>(Counter, "counter-changes");
 
 const rowIds = (async () => {
   const log = startLog("load rows");
+  try {
+    const rs = await query(
+      "select id, symbol, count from counters order by id",
+    );
 
-  const rs = await query(
-    "select id, symbol, count from counters order by id",
-  );
+    const ids = [] as string[];
+    for (const row of rs.rows) {
+      cache.replace(log, row as CounterStruct);
+      ids.push(row.id);
+    }
 
-  const ids = [] as string[];
-  for (const row of rs.rows) {
-    cache.replace(log, row);
-    ids.push(row.id);
+    log.sendTime(`${ids.length} rows`);
+    return ids;
+  } catch (e) {
+    log.sendTime("failed");
+    throw e;
   }
-
-  log.timeEnd();
-  return ids;
 })();
 
 export const getCounters = async (): Promise<Counter[]> => {
@@ -37,7 +41,7 @@ export const getCounters = async (): Promise<Counter[]> => {
 
 export const getChanges = (): ReadableStream => cache.makeEventStream();
 
-export const increment = async (ctx: LogContext, id: string) => {
+export const increment = async (log: TaskLog, id: string) => {
   const rs = await query(
     "update counters set count = count+1 where id=$1 returning id, symbol, count",
     [id],
@@ -45,5 +49,7 @@ export const increment = async (ctx: LogContext, id: string) => {
   if (rs.rowCount != 1) {
     throw `no counter incremented for '${id}'`;
   }
-  cache.replace(ctx, rs.rows[0]);
+  cache.replace(log, rs.rows[0] as CounterStruct);
 };
+
+export const stop = () => cache.close();

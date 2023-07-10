@@ -1,4 +1,4 @@
-import { LogContext, startLog } from "./log.ts";
+import { startLog, TaskLog } from "./log.ts";
 
 export interface Row {
   readonly id: string;
@@ -33,7 +33,7 @@ export class RowCache<T extends Row, RowStruct> {
       const log = startLog("channel");
       log.send(`received: ${JSON.stringify(event.data)}`);
       this.#replace(log, new this.#type(event.data));
-      log.timeEnd();
+      log.sendTime();
     };
   }
 
@@ -78,36 +78,47 @@ export class RowCache<T extends Row, RowStruct> {
     });
   }
 
-  /** Replaces a cached row if the given row is newer. (Local changes only.) */
-  replace(ctx: LogContext, data: RowStruct) {
+  /**
+   * Replaces a cached row if the given row is newer.
+   * (Not called for remote changes.)
+   */
+  replace(log: TaskLog, data: RowStruct) {
     const row = new this.#type(data);
-    ctx.send(`replace: ${row}`);
-    if (this.#replace(ctx, row)) {
-      ctx.send(`sending to channel: ${JSON.stringify(data)}`);
+    if (this.#replace(log, row)) {
+      log.send(`sending to channel: ${JSON.stringify(data)}`);
       this.#channel.postMessage(data);
     } else {
-      ctx.send("already in cache");
+      log.send("row already cached");
     }
   }
 
-  /** Replaces a cached row if the given row is newer. (Local and remote changes.) */
-  #replace(ctx: LogContext, row: T): boolean {
+  /** Stops listening for remote changes. */
+  close() {
+    this.#channel.close();
+  }
+
+  /**
+   * Replaces a cached row if the given row is newer.
+   * (Called for local and remote changes.)
+   */
+  #replace(log: TaskLog, row: T): boolean {
     const old = this.#rows.get(row.id);
     if (!row.replaces(old)) return false;
 
     this.#rows.set(row.id, row);
-    this.#notify(ctx, row);
+    this.#notify(log, row);
 
     return true;
   }
 
-  #notify(ctx: LogContext, row: T) {
+  #notify(log: TaskLog, row: T) {
     const subs = this.#subscribers;
+    if (subs.length == 0) return;
+
     this.#subscribers = [];
-    ctx.send(`notifying ${subs.length} subscribers`);
+    log.send(`notifying ${subs.length} subscribers`);
     for (const sub of subs) {
       sub(row);
     }
-    ctx.send("subscribers notified");
   }
 }

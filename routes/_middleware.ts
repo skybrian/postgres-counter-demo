@@ -11,8 +11,12 @@ export async function handler(
   const log = startLog(`${req.method} ${path}`);
   ctx.state.log = log;
   try {
-    return await ctx.next();
-  } finally {
-    log.timeEnd();
+    const response = await ctx.next();
+    log.sendTime(`status: ${response.status}`);
+    return response;
+  } catch (e) {
+    log.send(`uncaught exception: ${e}`);
+    log.sendTime("failed");
+    return new Response("That didn't work.", { status: 500 });
   }
 }

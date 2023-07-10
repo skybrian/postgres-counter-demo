@@ -2,9 +2,11 @@
   "lock": false,
   "tasks": {
     "start": "deno run -A --unstable --watch=static/,routes/ dev.ts",
+    "debug": "deno run -A --unstable --inspect-wait dev.ts",
     "update": "deno run -A -r https://fresh.deno.dev/update .",
     "install-tables": "deno run -A commands/install-tables.ts",
-    "print-counters": "deno run -A commands/print-counters.ts"
+    "print-counters": "deno run -A commands/print-counters.ts",
+    "print-cached-counters": "deno run -A --unstable commands/print-cached-counters.ts"
   },
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.2.0/",

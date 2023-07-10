@@ -1,6 +1,6 @@
 import { Handlers } from "$fresh/server.ts";
 import { increment } from "../lib/counters.ts";
-import { LogContext } from "../lib/log.ts";
+import { TaskLog } from "../lib/log.ts";
 
 export const handler: Handlers = {
   async POST(req: Request, ctx) {
@@ -11,7 +11,7 @@ export const handler: Handlers = {
       throw "no id field";
     }
 
-    const log = ctx.state.log as LogContext;
+    const log = ctx.state.log as TaskLog;
     try {
       log.send("calling increment");
       await increment(log, id);
