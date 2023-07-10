@@ -16,7 +16,7 @@ export class CircularBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
   #head: number; // location of oldest item
   #tail: number; // location where next item will be stored
   #size: number; // number of items in the buffer
-  #pushCount: number; // number of items ever pushed
+  #pushed: number; // number of items ever pushed
   #waiters: (() => void)[];
 
   /**
@@ -30,7 +30,7 @@ export class CircularBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
     this.#head = 0;
     this.#tail = 0;
     this.#size = 0;
-    this.#pushCount = 0;
+    this.#pushed = 0;
     this.#waiters = [];
   }
 
@@ -49,7 +49,7 @@ export class CircularBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
     }
     this.#buffer[this.#tail] = item; // Add item at the tail
     this.#tail = (this.#tail + 1) % limit; // Move tail circularly
-    this.#pushCount++;
+    this.#pushed++;
 
     this.#waiters.map((wake) => wake());
     this.#waiters = [];
@@ -68,22 +68,22 @@ export class CircularBuffer<T> implements AsyncIterable<T | typeof SKIPPED> {
     void,
     unknown
   > {
-    let itemsDone = this.#pushCount - this.#size;
+    let itemsPassed = this.#pushed - this.#size;
     while (true) {
-      const todo = this.#pushCount - itemsDone;
+      const todo = this.#pushed - itemsPassed;
 
       if (todo == 0) {
-        // wait for a new item to be pushed
+        // caught up; wait for a new item to be pushed
         await new Promise<void>((resolve) => this.#waiters.push(resolve));
       } else if (todo > this.#size) {
-        // fell too far behind
+        // fell too far behind; skip to catch up
         yield SKIPPED;
-        itemsDone = this.#pushCount - this.#size;
+        itemsPassed = this.#pushed - this.#size;
       } else {
         const index = (this.#tail - todo + this.#buffer.length) %
           this.#buffer.length;
         yield this.#buffer[index];
-        itemsDone++;
+        itemsPassed++;
       }
     }
   }
