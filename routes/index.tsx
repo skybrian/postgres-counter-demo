@@ -4,10 +4,12 @@ import { asset, Head } from "$fresh/runtime.ts";
 import { Counter } from "../lib/schema.ts";
 import CounterButton from "../islands/counter-button.tsx";
 import { getCounters } from "../lib/counters.ts";
+import { TaskLog } from "../lib/log.ts";
 
 export const handler: Handlers = {
   async GET(_, ctx: HandlerContext) {
-    const response = await ctx.render(await getCounters());
+    const log = ctx.state.log as TaskLog;
+    const response = await ctx.render(await getCounters(log));
     response.headers.set("cache-control", "no-store");
     return response;
   },

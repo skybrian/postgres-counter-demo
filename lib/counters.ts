@@ -5,7 +5,13 @@ import { Counter, CounterStruct } from "./schema.ts";
 
 const cache = new RowCache<Counter, CounterStruct>(Counter, "counter-changes");
 
-const rowIds = (async () => {
+let loading: Promise<string[]> | null = null;
+
+const load = async (): Promise<string[]> => {
+  if (loading) {
+    return loading;
+  }
+
   const log = startLog("load counters");
   try {
     const rs = await query(
@@ -23,13 +29,27 @@ const rowIds = (async () => {
   } catch (e) {
     log.sendTime("failed");
     throw e;
+  } finally {
+    loading = null;
   }
-})();
+};
 
-export const getCounters = async (): Promise<Counter[]> => {
+let loaded = load();
+
+const getRowIds = async (log: TaskLog): Promise<string[]> => {
+  try {
+    return await loaded;
+  } catch (e) {
+    log.send("Counters failed to load, retrying");
+    loaded = load();
+    throw e;
+  }
+};
+
+export const getCounters = async (log: TaskLog): Promise<Counter[]> => {
   const rows = [] as Counter[];
 
-  for (const id of await rowIds) {
+  for (const id of await getRowIds(log)) {
     const row = cache.getRow(id);
     if (!row) throw "failed to load row"; // shouldn't happen
 
