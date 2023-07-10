@@ -25,28 +25,41 @@ export class TaskLog {
   sendTime(msg?: unknown) {
     const elapsed = Math.ceil(performance.now() - this.#startTime);
     if (msg) {
-      this.send(`${elapsed} ms - ${msg}`);
+      this.send(`${elapsed} ms ${msg}`);
     } else {
       this.send(`${elapsed} ms`);
     }
   }
 
-  /** Starts a new log for a child task. */
-  startChild(label: string): TaskLog {
-    this.send(label);
+  /**
+   * Starts a new log for a subtask.
+   * Logs a message indicating the start of the task.
+   *
+   * @param label included in the prefix for each of this tasks's log messages.
+   * @param msg optional suffix for the subtask's first message.
+   */
+  startChild(label: string, msg?: string): TaskLog {
+    if (msg) {
+      this.send(`${label} ${msg}`);
+    } else {
+      this.send(label);
+    }
     return new TaskLog(`${this.#path}${this.#messageCount}.`, ` ${label}`);
   }
 }
 
 /**
- * Starts a log for reporting progress associated with a new top-level task.
+ * Creates a logger for reporting progress associated with a new top-level task.
  * (For example, a web request.)
- * Each task is given a unique number.
+ * Logs a message indicating the start of the task.
+ * Each task is given a unique number that will appear at the beginning
+ * of each log message from that task (including subtasks).
  *
- * @param label a short label included in the prefix for each of this task's messages.
+ * @param label included in the prefix for each of this task's log messages.
+ * @param msg optional suffix for the task's first message.
  */
-export const startLog = (label: string): TaskLog => {
-  return root.startChild(label);
+export const startLog = (label: string, msg?: string): TaskLog => {
+  return root.startChild(label, msg);
 };
 
 export const makeLogStream = (): ReadableStream<Uint8Array> => {

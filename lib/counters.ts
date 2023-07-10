@@ -6,7 +6,7 @@ import { Counter, CounterStruct } from "./schema.ts";
 const cache = new RowCache<Counter, CounterStruct>(Counter, "counter-changes");
 
 const rowIds = (async () => {
-  const log = startLog("load rows");
+  const log = startLog("load counters");
   try {
     const rs = await query(
       "select id, symbol, count from counters order by id",
