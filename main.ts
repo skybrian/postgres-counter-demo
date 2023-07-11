@@ -6,19 +6,15 @@
 
 import "$std/dotenv/load.ts";
 
-import { startLog } from "./lib/log.ts";
 import { start } from "$fresh/server.ts";
 import manifest from "./fresh.gen.ts";
 
-const log = startLog("lifecycle");
+import { startLog } from "./lib/log.ts";
+import { configureMiddleware } from "./routes/_middleware.ts";
+import { loadCounters } from "./lib/counters.ts";
 
-globalThis.addEventListener("unload", () => {
-  log.sendTime("unload event");
-});
-
-globalThis.addEventListener("unhandledrejection", (e) => {
-  log.send(`unhandled rejection at: ${e.promise}, reason: ${e.reason}`);
-});
+const log = startLog("startup");
+configureMiddleware(await loadCounters(log));
+log.sendTime("done");
 
 await start(manifest);
-log.sendTime("fresh framework exited");

@@ -93,7 +93,7 @@ export class RowCache<T extends Row, RowStruct> {
   }
 
   /** Stops listening for remote changes. */
-  close() {
+  disconnect() {
     this.#channel.close();
   }
 

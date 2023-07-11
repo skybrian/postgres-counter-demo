@@ -3,13 +3,12 @@ import { asset, Head } from "$fresh/runtime.ts";
 
 import { Counter } from "../lib/schema.ts";
 import CounterButton from "../islands/counter-button.tsx";
-import { getCounters } from "../lib/counters.ts";
-import { TaskLog } from "../lib/log.ts";
+import { Counters } from "../lib/counters.ts";
 
 export const handler: Handlers = {
   async GET(_, ctx: HandlerContext) {
-    const log = ctx.state.log as TaskLog;
-    const response = await ctx.render(await getCounters(log));
+    const counters = ctx.state.counters as Counters;
+    const response = await ctx.render(counters.all());
     response.headers.set("cache-control", "no-store");
     return response;
   },

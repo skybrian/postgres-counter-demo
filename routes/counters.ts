@@ -1,9 +1,10 @@
-import { Handlers } from "$fresh/server.ts";
-import { getChanges } from "../lib/counters.ts";
+import { HandlerContext, Handlers } from "$fresh/server.ts";
+import { Counters } from "../lib/counters.ts";
 
 export const handler: Handlers = {
-  GET(_req: Request): Response {
-    return new Response(getChanges(), {
+  GET(_, ctx: HandlerContext) {
+    const counters = ctx.state.counters as Counters;
+    return new Response(counters.getChanges(), {
       headers: {
         "content-type": "text/event-stream; charset=utf-8",
         "cache-control": "no-store",

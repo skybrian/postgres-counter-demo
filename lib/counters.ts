@@ -1,75 +1,70 @@
 import { RowCache } from "./cache.ts";
 import { query } from "./database.ts";
-import { startLog, TaskLog } from "./log.ts";
+import { TaskLog } from "./log.ts";
 import { Counter, CounterStruct } from "./schema.ts";
 
-const cache = new RowCache<Counter, CounterStruct>(Counter, "counter-changes");
+export class Counters {
+  readonly #rowIds: string[];
+  readonly #cache: RowCache<Counter, CounterStruct>;
 
-let loading: Promise<string[]> | null = null;
-
-const load = async (): Promise<string[]> => {
-  if (loading) {
-    return loading;
+  constructor(rowIds: string[], cache: RowCache<Counter, CounterStruct>) {
+    this.#rowIds = rowIds;
+    this.#cache = cache;
   }
 
-  const log = startLog("load counters");
+  /** Returns the current value of all counters in the cache. */
+  all(): Counter[] {
+    const rows = [] as Counter[];
+    for (const id of this.#rowIds) {
+      const row = this.#cache.getRow(id);
+      if (!row) throw "failed to load row"; // shouldn't happen
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  getChanges(): ReadableStream {
+    return this.#cache.makeEventStream();
+  }
+
+  async increment(log: TaskLog, id: string) {
+    const rs = await query(
+      "update counters set count = count+1 where id=$1 returning id, symbol, count",
+      [id],
+    );
+    if (rs.rowCount != 1) {
+      throw `no counter incremented for '${id}'`;
+    }
+    this.#cache.replace(log, rs.rows[0] as CounterStruct);
+  }
+
+  disconnect() {
+    this.#cache.disconnect();
+  }
+}
+
+export const loadCounters = async (log: TaskLog): Promise<Counters> => {
+  log = log.startChild("load counters");
+
   try {
     const rs = await query(
       "select id, symbol, count from counters order by id",
     );
 
     const ids = [] as string[];
+    const cache = new RowCache<Counter, CounterStruct>(
+      Counter,
+      "counter-changes",
+    );
     for (const row of rs.rows) {
       cache.replace(log, row as CounterStruct);
       ids.push(row.id);
     }
 
     log.sendTime(`${ids.length} rows`);
-    return ids;
+    return new Counters(ids, cache);
   } catch (e) {
     log.sendTime("failed");
     throw e;
-  } finally {
-    loading = null;
   }
 };
-
-let loaded = load();
-
-const getRowIds = async (log: TaskLog): Promise<string[]> => {
-  try {
-    return await loaded;
-  } catch (e) {
-    log.send("Counters failed to load, retrying");
-    loaded = load();
-    throw e;
-  }
-};
-
-export const getCounters = async (log: TaskLog): Promise<Counter[]> => {
-  const rows = [] as Counter[];
-
-  for (const id of await getRowIds(log)) {
-    const row = cache.getRow(id);
-    if (!row) throw "failed to load row"; // shouldn't happen
-
-    rows.push(row);
-  }
-
-  return rows;
-};
-
-export const getChanges = (): ReadableStream => cache.makeEventStream();
-
-export const increment = async (log: TaskLog, id: string) => {
-  const rs = await query(
-    "update counters set count = count+1 where id=$1 returning id, symbol, count",
-    [id],
-  );
-  if (rs.rowCount != 1) {
-    throw `no counter incremented for '${id}'`;
-  }
-  cache.replace(log, rs.rows[0] as CounterStruct);
-};
-
-export const stop = () => cache.close();
