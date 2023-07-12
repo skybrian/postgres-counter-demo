@@ -9,12 +9,5 @@ import "$std/dotenv/load.ts";
 import { start } from "$fresh/server.ts";
 import manifest from "./fresh.gen.ts";
 
-import { startLog } from "./lib/log.ts";
-import { configureMiddleware } from "./routes/_middleware.ts";
-import { loadCounters } from "./lib/counters.ts";
-
-const log = startLog("startup");
-configureMiddleware(await loadCounters(log));
-log.sendTime("done");
-
+// @ts-ignore See: https://github.com/denoland/fresh/issues/1452#issuecomment-1631870112
 await start(manifest);

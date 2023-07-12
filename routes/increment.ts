@@ -1,5 +1,5 @@
 import { Handlers } from "$fresh/server.ts";
-import { Counters } from "../lib/counters.ts";
+import { loadCounters } from "../lib/counters.ts";
 import { TaskLog } from "../lib/log.ts";
 
 export const handler: Handlers = {
@@ -12,8 +12,8 @@ export const handler: Handlers = {
     }
 
     const log = ctx.state.log as TaskLog;
-    const counters = ctx.state.counters as Counters;
     try {
+      const counters = await loadCounters();
       await counters.increment(log, id);
     } catch (e) {
       log.send(e);

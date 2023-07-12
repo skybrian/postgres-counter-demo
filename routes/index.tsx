@@ -1,24 +1,29 @@
 import { HandlerContext, Handlers, PageProps } from "$fresh/server.ts";
 import { asset, Head } from "$fresh/runtime.ts";
 
-import { Counter } from "../lib/schema.ts";
 import CounterButton from "../islands/counter-button.tsx";
-import { Counters } from "../lib/counters.ts";
+import { getCounters } from "../lib/counters.ts";
+import { LoadingScreen } from "../components/loading.tsx";
 
 export const handler: Handlers = {
   async GET(_, ctx: HandlerContext) {
-    const counters = ctx.state.counters as Counters;
-    const response = await ctx.render(counters.all());
+    const counters = getCounters();
+    const pageFunction = counters == null ? LoadingScreen : CounterPage;
+    const response = await ctx.render(pageFunction);
     response.headers.set("cache-control", "no-store");
     return response;
   },
 };
 
-export default function renderPage({ data }: PageProps<Counter[]>) {
-  const renderForm = (rows: Counter[]) => (
-    <div class="counters">{rows.map((c) => <CounterButton {...c} />)}</div>
-  );
+// See: https://github.com/denoland/fresh/issues/1452
+export default function forward(page: PageProps<(p: PageProps) => unknown>) {
+  const result = page.data(page);
+  return result as unknown;
+}
 
+function CounterPage(_page: PageProps) {
+  const counters = getCounters();
+  if (counters == null) throw "shouldn't happen";
   return (
     <>
       <Head>
@@ -28,7 +33,9 @@ export default function renderPage({ data }: PageProps<Counter[]>) {
       <div>
         <h1>Postgres counter demo</h1>
 
-        {data ? renderForm(data) : "unable to load counters"}
+        <div class="counters">
+          {counters.all().map((c) => <CounterButton {...c} />)}
+        </div>
 
         <p>
           This page is a demonstration of how to build a database-backed website

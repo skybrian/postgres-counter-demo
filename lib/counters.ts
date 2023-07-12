@@ -1,6 +1,6 @@
 import { RowCache } from "./cache.ts";
 import { query } from "./database.ts";
-import { TaskLog } from "./log.ts";
+import { startLog, TaskLog } from "./log.ts";
 import { Counter, CounterStruct } from "./schema.ts";
 
 export class Counters {
@@ -43,9 +43,11 @@ export class Counters {
   }
 }
 
-export const loadCounters = async (log: TaskLog): Promise<Counters> => {
-  log = log.startChild("load counters");
+let loading: Promise<Counters> | null = null;
+let counters: Counters | null = null;
 
+const load = async (): Promise<Counters> => {
+  const log = startLog("load counters");
   try {
     const rs = await query(
       "select id, symbol, count from counters order by id",
@@ -62,9 +64,34 @@ export const loadCounters = async (log: TaskLog): Promise<Counters> => {
     }
 
     log.sendTime(`${ids.length} rows`);
-    return new Counters(ids, cache);
+    counters = new Counters(ids, cache);
+    loading = null;
+    return counters;
   } catch (e) {
     log.sendTime("failed");
+    loading = null;
     throw e;
   }
+};
+
+/** Returns the counters once they are loaded. */
+export const loadCounters = (): Promise<Counters> => {
+  if (counters != null) {
+    return Promise.resolve(counters);
+  }
+  if (!loading) {
+    loading = load();
+  }
+  return loading;
+};
+
+/** Returns the counters or null to indicate that they are still loading. */
+export const getCounters = (): Counters | null => {
+  if (counters != null) {
+    return counters;
+  }
+  if (!loading) {
+    loading = load();
+  }
+  return null;
 };
