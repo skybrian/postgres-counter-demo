@@ -12,6 +12,9 @@ import {
 } from "https://esm.sh/@neondatabase/serverless@0.4.26";
 // import { FullQueryResults, neon } from "npm:@neondatabase/serverless@0.4.26";
 
+import { TaskLog } from "./log.ts";
+import { delay, TIMEOUT } from "./async.ts";
+
 const neonQuery = (() => {
   const url = Deno.env.get("DATABASE_URL");
   if (url == null) throw "need to set DATABASE_URL environment variable";
@@ -23,4 +26,18 @@ export const query = async (
   params?: unknown[],
 ): Promise<FullQueryResults<false>> => {
   return await neonQuery(sql, params);
+};
+
+/**
+ * Sends a query to the database to wake it up. Returns true if it wakes by the timeout.
+ */
+export const wake = async (log: TaskLog, millis = 1000): Promise<boolean> => {
+  log = log.startChild("wake");
+
+  const rs = query("select 1");
+  rs.then((_) => log.sendTime("query returned"));
+
+  const done = await Promise.race([delay(millis), rs]) != TIMEOUT;
+  log.send(done ? "database is ready" : "timed out");
+  return done;
 };

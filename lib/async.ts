@@ -1,4 +1,15 @@
 /**
+ * Indicates that a timeout happened.
+ */
+export const TIMEOUT = Symbol("timeout");
+
+/**
+ * Waits the given number of milliseconds, then returns TIMEOUT.
+ */
+export const delay = (millis: number): Promise<symbol> =>
+  new Promise((resolve) => setTimeout(() => resolve(TIMEOUT), millis));
+
+/**
  * Indicates skipped items when iterating over a buffer.
  */
 export const SKIPPED = Symbol("some items were skipped");
