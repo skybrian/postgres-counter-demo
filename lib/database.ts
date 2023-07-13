@@ -36,6 +36,7 @@ export const wake = async (
   millis = 1000,
 ): Promise<boolean> => {
   for (let failures = 0; failures < 2; failures++) {
+    if (failures > 0) await delay(250);
     const log = parentLog.startChild(`wake`);
     try {
       const rs = query("select 1");
