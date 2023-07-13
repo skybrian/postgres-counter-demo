@@ -19,12 +19,12 @@ export async function handler(
     if (response.status == 200) {
       log.sendTime();
     } else {
-      log.sendTime(`- status: ${response.status}`);
+      log.sendTime(`status: ${response.status}`);
     }
     return response;
   } catch (e) {
     log.send(e);
-    log.sendTime("- failed (status: 500)");
+    log.sendTime("failed (status: 500)");
     return new Response("That didn't work. (See log.)", { status: 500 });
   }
 }

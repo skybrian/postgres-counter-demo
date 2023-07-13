@@ -37,7 +37,11 @@ export class TaskLog {
   /** Sends the elapsed time in milliseconds since this task started, optionally followed by a message. */
   sendTime(msg?: unknown) {
     const elapsed = Math.ceil(performance.now() - this.#startTime);
-    this.#sendLine(` at ${elapsed} ms`, msg);
+    if (msg) {
+      this.#sendLine(` at ${elapsed} ms`, msg);
+    } else {
+      this.#sendLine("", `${elapsed} ms`);
+    }
   }
 
   /**

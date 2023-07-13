@@ -31,7 +31,7 @@ export class RowCache<T extends Row, RowStruct> {
 
     this.#channel.onmessage = (event: MessageEvent) => {
       const log = startLog(`channel ${this.#channel.name}`);
-      log.send(`received: ${JSON.stringify(event.data)}`);
+      log.send(`received ${JSON.stringify(event.data)}`);
       const updated = this.#replace(log, new this.#type(event.data));
       log.sendTime(updated ? "updated" : "not updated");
     };
@@ -85,8 +85,8 @@ export class RowCache<T extends Row, RowStruct> {
   replace(log: TaskLog, data: RowStruct) {
     const row = new this.#type(data);
     if (this.#replace(log, row)) {
-      log.send(`to channel: ${JSON.stringify(data)}`);
       this.#channel.postMessage(data);
+      log.send(`sent ${JSON.stringify(data)}`);
     } else {
       log.send("row already cached");
     }
