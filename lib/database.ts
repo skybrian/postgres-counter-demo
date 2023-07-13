@@ -39,10 +39,13 @@ export const wake = async (
     const log = parentLog.startChild(`wake`);
     try {
       const rs = query("select 1");
-      rs.then((_) => log.sendTime("query returned"));
-
       const done = await Promise.race([delay(millis), rs]) != TIMEOUT;
       log.send(done ? "database is ready" : "timed out");
+      if (!done) {
+        rs.then((_) => log.sendTime("query returned")).catch((e) =>
+          log.sendTime(e)
+        );
+      }
       return done;
     } catch (e) {
       log.send(e);

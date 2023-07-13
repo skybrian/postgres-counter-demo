@@ -2,14 +2,26 @@ import { HandlerContext, Handlers, PageProps } from "$fresh/server.ts";
 import { asset, Head } from "$fresh/runtime.ts";
 
 import CounterButton from "../islands/counter-button.tsx";
-import { getCounters } from "../lib/counters.ts";
+import { Counters, getCounters } from "../lib/counters.ts";
 import { LoadingScreen } from "../components/loading.tsx";
+import { TaskLog } from "../lib/log.ts";
+
+type PageFunction = (p: PageProps) => unknown;
 
 export const handler: Handlers = {
   async GET(_, ctx: HandlerContext) {
+    const log = ctx.state.log as TaskLog;
+
+    let page: PageFunction;
     const counters = getCounters();
-    const pageFunction = counters == null ? LoadingScreen : CounterPage;
-    const response = await ctx.render(pageFunction);
+    if (!counters) {
+      page = LoadingScreen;
+      log.send("showing loading screen");
+    } else {
+      page = (_) => CounterPage(counters);
+    }
+
+    const response = await ctx.render(page);
     response.headers.set("cache-control", "no-store");
     return response;
   },
@@ -21,8 +33,7 @@ export default function forward(page: PageProps<(p: PageProps) => unknown>) {
   return result as unknown;
 }
 
-function CounterPage(_page: PageProps) {
-  const counters = getCounters();
+function CounterPage(counters: Counters) {
   if (counters == null) throw "shouldn't happen";
   return (
     <>
