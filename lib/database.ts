@@ -9,8 +9,8 @@
 import {
   FullQueryResults,
   neon,
-} from "https://esm.sh/@neondatabase/serverless@0.4.26";
-// import { FullQueryResults, neon } from "npm:@neondatabase/serverless@0.4.26";
+} from "https://esm.sh/@neondatabase/serverless@0.5.0";
+// } from "npm:@neondatabase/serverless@0.5.0";
 
 import { TaskLog } from "./log.ts";
 import { delay, TIMEOUT } from "./async.ts";
@@ -31,13 +31,23 @@ export const query = async (
 /**
  * Sends a query to the database to wake it up. Returns true if it wakes by the timeout.
  */
-export const wake = async (log: TaskLog, millis = 1000): Promise<boolean> => {
-  log = log.startChild("wake");
+export const wake = async (
+  parentLog: TaskLog,
+  millis = 1000,
+): Promise<boolean> => {
+  for (let failures = 0; failures < 2; failures++) {
+    const log = parentLog.startChild(`wake`);
+    try {
+      const rs = query("select 1");
+      rs.then((_) => log.sendTime("query returned"));
 
-  const rs = query("select 1");
-  rs.then((_) => log.sendTime("query returned"));
+      const done = await Promise.race([delay(millis), rs]) != TIMEOUT;
+      log.send(done ? "database is ready" : "timed out");
+      return done;
+    } catch (e) {
+      log.send(e);
+    }
+  }
 
-  const done = await Promise.race([delay(millis), rs]) != TIMEOUT;
-  log.send(done ? "database is ready" : "timed out");
-  return done;
+  throw "can't wake database (gave up)";
 };

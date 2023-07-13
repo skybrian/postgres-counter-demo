@@ -23,7 +23,7 @@ export async function handler(
     }
     return response;
   } catch (e) {
-    log.send(`uncaught exception: ${e.stack}`);
+    log.send(e);
     log.sendTime("- failed (status: 500)");
     return new Response("That didn't work. (See log.)", { status: 500 });
   }
