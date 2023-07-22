@@ -10,10 +10,13 @@ import { start } from "$fresh/server.ts";
 import manifest from "./fresh.gen.ts";
 import { startLog } from "./lib/log.ts";
 import { wake } from "./lib/database.ts";
+import { loadCounters } from "./lib/counters.ts";
 
 {
   const log = startLog("startup");
-  await wake(log, 2000);
+  if (await wake(log, 2000)) {
+    await loadCounters();
+  }
   log.sendTime();
 }
 

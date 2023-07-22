@@ -5,7 +5,7 @@ export function LoadingScreen(props: PageProps) {
   return (
     <>
       <Head>
-        <meta http-equiv="refresh" content={`5;url=${props.url}`} />
+        <meta http-equiv="refresh" content={`2;url=${props.url}`} />
         <title>Loading...</title>
         <style>
           {`

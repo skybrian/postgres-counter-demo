@@ -9,8 +9,8 @@
 import {
   FullQueryResults,
   neon,
-} from "https://esm.sh/@neondatabase/serverless@0.5.0";
-// } from "npm:@neondatabase/serverless@0.5.0";
+} from "https://esm.sh/@neondatabase/serverless@0.5.6";
+// } from "npm:@neondatabase/serverless@0.5.6";
 
 import { TaskLog } from "./log.ts";
 import { delay, TIMEOUT } from "./async.ts";
@@ -41,7 +41,7 @@ export const wake = async (
     try {
       const rs = query("select 1");
       const done = await Promise.race([delay(millis), rs]) != TIMEOUT;
-      log.send(done ? "database is ready" : "timed out");
+      log.sendTime(done ? "database is ready" : "timed out");
       if (!done) {
         rs.then((_) => log.sendTime("query returned")).catch((e) =>
           log.sendTime(e)
