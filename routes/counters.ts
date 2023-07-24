@@ -4,6 +4,10 @@ import { loadCounters } from "../lib/counters.ts";
 export const handler: Handlers = {
   async GET(_, _ctx: HandlerContext) {
     const counters = await loadCounters();
+    if (counters == null) {
+      throw "counters not loaded; try again";
+    }
+
     return Promise.resolve(
       new Response(counters.getChanges(), {
         headers: {

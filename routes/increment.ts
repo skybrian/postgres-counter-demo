@@ -14,6 +14,9 @@ export const handler: Handlers = {
     const log = ctx.state.log as TaskLog;
     try {
       const counters = await loadCounters();
+      if (counters == null) {
+        throw "counters not loaded; try again";
+      }
       await counters.increment(log, id);
     } catch (e) {
       log.send(e);

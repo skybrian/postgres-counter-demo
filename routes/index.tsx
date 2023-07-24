@@ -2,7 +2,7 @@ import { HandlerContext, Handlers, PageProps } from "$fresh/server.ts";
 import { asset, Head } from "$fresh/runtime.ts";
 
 import CounterButton from "../islands/counter-button.tsx";
-import { Counters, getCounters } from "../lib/counters.ts";
+import { Counters, loadCounters } from "../lib/counters.ts";
 import { LoadingScreen } from "../components/loading.tsx";
 import { TaskLog } from "../lib/log.ts";
 
@@ -13,7 +13,7 @@ export const handler: Handlers = {
     const log = ctx.state.log as TaskLog;
 
     let page: PageFunction;
-    const counters = getCounters();
+    const counters = await loadCounters(100);
     if (!counters) {
       page = LoadingScreen;
       log.send("showing loading screen");
@@ -38,7 +38,7 @@ function CounterPage(counters: Counters) {
   return (
     <>
       <Head>
-        <title>Postgres counter demo!</title>
+        <title>Postgres counter demo</title>
         <link rel="stylesheet" href={asset("/global.css")} />
       </Head>
       <div>

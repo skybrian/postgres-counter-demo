@@ -1,3 +1,4 @@
+import { settledBy } from "./async.ts";
 import { RowCache } from "./cache.ts";
 import { query } from "./database.ts";
 import { startLog, TaskLog } from "./log.ts";
@@ -41,6 +42,10 @@ export class Counters {
   disconnect() {
     this.#cache.disconnect();
   }
+
+  toString() {
+    return "Counters()";
+  }
 }
 
 let loading: Promise<Counters> | null = null;
@@ -74,24 +79,16 @@ const load = async (): Promise<Counters> => {
   }
 };
 
-/** Returns the counters once they are loaded. */
-export const loadCounters = (): Promise<Counters> => {
-  if (counters != null) {
-    return Promise.resolve(counters);
-  }
-  if (!loading) {
-    loading = load();
-  }
-  return loading;
-};
-
-/** Returns the counters or null to indicate that they are still loading. */
-export const getCounters = (): Counters | null => {
+/** Returns the counters if they load within the given timeout. */
+export const loadCounters = async (
+  timeout = 1000,
+): Promise<Counters | null> => {
   if (counters != null) {
     return counters;
   }
   if (!loading) {
     loading = load();
   }
-  return null;
+  await settledBy(loading, timeout);
+  return counters;
 };

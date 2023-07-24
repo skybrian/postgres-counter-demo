@@ -10,6 +10,23 @@ export const delay = (millis: number): Promise<symbol> =>
   new Promise((resolve) => setTimeout(() => resolve(TIMEOUT), millis));
 
 /**
+ * Waits for a promise to settle until the given timeout. Returns true if done.
+ */
+export const settledBy = async (
+  result: Promise<unknown>,
+  millis: number,
+): Promise<boolean> => {
+  let timeoutId;
+  const delay = new Promise((resolve) => {
+    timeoutId = setTimeout(() => resolve(TIMEOUT), millis);
+  });
+
+  const first = await Promise.race([delay, result]);
+  clearTimeout(timeoutId);
+  return first != TIMEOUT;
+};
+
+/**
  * Indicates skipped items when iterating over a buffer.
  */
 export const SKIPPED = Symbol("some items were skipped");
