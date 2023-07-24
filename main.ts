@@ -9,5 +9,7 @@ import "$std/dotenv/load.ts";
 import { start } from "$fresh/server.ts";
 import manifest from "./fresh.gen.ts";
 
+console.log("starting server");
+
 // @ts-ignore See: https://github.com/denoland/fresh/issues/1452#issuecomment-1631870112
 await start(manifest);
